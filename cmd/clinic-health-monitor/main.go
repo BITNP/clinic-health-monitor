@@ -1,6 +1,7 @@
 package main
 
 import (
+	"clinic-health-monitor/internal"
 	"context"
 	"errors"
 	"log"
@@ -11,18 +12,12 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"clinic-health-monitor/internal/checker"
-	"clinic-health-monitor/internal/config"
-	"clinic-health-monitor/internal/httpapi"
-	"clinic-health-monitor/internal/monitor"
-	"clinic-health-monitor/internal/notifier"
 )
 
 const shutdownTimeout = 10 * time.Second
 
 func main() {
-	cfg, err := config.Load(os.Getenv)
+	cfg, err := internal.Load(os.Getenv)
 	if err != nil {
 		log.Fatalf("configuration: %v", err)
 	}
@@ -34,14 +29,14 @@ func main() {
 		)
 	}
 
-	healthChecker := checker.New(cfg.TargetURL, cfg.Timeout)
-	gateway := notifier.New(notifier.Config{
+	healthChecker := internal.New(cfg.TargetURL, cfg.Timeout)
+	gateway := internal.New(internal.Config{
 		BaseURL: cfg.GatewayURL,
 		APIKey:  cfg.GatewayAPIKey,
 		Timeout: cfg.GatewayTimeout,
 	}, cfg.MaintainerQQIDs)
 
-	watcher := monitor.New(monitor.Config{
+	watcher := internal.New(internal.Config{
 		TargetName:          cfg.TargetName,
 		TargetURL:           cfg.TargetURL,
 		InstanceName:        cfg.InstanceName,
@@ -59,7 +54,7 @@ func main() {
 	}
 
 	server := &http.Server{
-		Handler:           httpapi.New(),
+		Handler:           internal.New(),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

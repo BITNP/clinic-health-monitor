@@ -1,5 +1,5 @@
 // Package notifier sends outbound messages through message-gateway.
-package notifier
+package internal
 
 import (
 	"bytes"

@@ -1,6 +1,7 @@
 package checker_test
 
 import (
+	"clinic-health-monitor/internal"
 	"context"
 	"fmt"
 	"net"
@@ -9,8 +10,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"clinic-health-monitor/internal/checker"
 )
 
 func TestCheckHealthy(t *testing.T) {
@@ -22,7 +21,7 @@ func TestCheckHealthy(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result := checker.New(server.URL, time.Second).Check(context.Background())
+	result := internal.New(server.URL, time.Second).Check(context.Background())
 	if !result.Healthy {
 		t.Fatalf("Healthy = false, error = %v", result.Err)
 	}
@@ -46,7 +45,7 @@ func TestCheckNoContentIsHealthy(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result := checker.New(server.URL, time.Second).Check(context.Background())
+	result := internal.New(server.URL, time.Second).Check(context.Background())
 	if !result.Healthy {
 		t.Fatalf("Healthy = false, error = %v", result.Err)
 	}
@@ -74,7 +73,7 @@ func TestCheckNon2xxIsUnhealthy(t *testing.T) {
 			}))
 			defer server.Close()
 
-			result := checker.New(server.URL, time.Second).Check(context.Background())
+			result := internal.New(server.URL, time.Second).Check(context.Background())
 			if result.Healthy {
 				t.Fatal("Healthy = true, want false")
 			}
@@ -107,7 +106,7 @@ func TestCheckDoesNotFollowRedirects(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result := checker.New(server.URL+"/start", time.Second).Check(context.Background())
+	result := internal.New(server.URL+"/start", time.Second).Check(context.Background())
 	if result.Healthy {
 		t.Fatal("Healthy = true, want false")
 	}
@@ -126,7 +125,7 @@ func TestCheckTimeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result := checker.New(server.URL, 20*time.Millisecond).Check(context.Background())
+	result := internal.New(server.URL, 20*time.Millisecond).Check(context.Background())
 	if result.Healthy {
 		t.Fatal("Healthy = true, want false")
 	}
@@ -145,7 +144,7 @@ func TestCheckConnectionRefused(t *testing.T) {
 		t.Fatalf("Close() error = %v", err)
 	}
 
-	result := checker.New("http://"+address, time.Second).Check(context.Background())
+	result := internal.New("http://"+address, time.Second).Check(context.Background())
 	if result.Healthy {
 		t.Fatal("Healthy = true, want false")
 	}
@@ -163,7 +162,7 @@ func TestCheckCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	result := checker.New(server.URL, time.Second).Check(ctx)
+	result := internal.New(server.URL, time.Second).Check(ctx)
 	if result.Healthy {
 		t.Fatal("Healthy = true, want false")
 	}
@@ -178,7 +177,7 @@ func TestCheckLimitsBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result := checker.New(server.URL, time.Second).Check(context.Background())
+	result := internal.New(server.URL, time.Second).Check(context.Background())
 	if len(result.Body) > 4096 {
 		t.Errorf("Body length = %d, want at most 4096", len(result.Body))
 	}

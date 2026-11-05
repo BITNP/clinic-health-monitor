@@ -1,6 +1,6 @@
 // Package config loads and validates the health monitor's environment
 // configuration.
-package config
+package internal
 
 import (
 	"errors"
