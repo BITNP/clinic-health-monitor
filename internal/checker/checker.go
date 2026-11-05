@@ -1,5 +1,5 @@
 // Package checker performs one HTTP health check against the configured target.
-package internal
+package checker
 
 import (
 	"context"

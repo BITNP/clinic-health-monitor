@@ -1,20 +1,24 @@
 // Package monitor polls the target and manages outage/recovery notifications.
-package internal
+package monitor
 
 import (
 	"context"
 	"log"
 	"time"
+
+	"clinic-health-monitor/internal/alert"
+	"clinic-health-monitor/internal/checker"
+	"clinic-health-monitor/internal/notifier"
 )
 
 // Checker performs one health check.
 type Checker interface {
-	Check(context.Context) Result
+	Check(context.Context) checker.Result
 }
 
 // Notifier delivers one formatted message to the maintainers.
 type Notifier interface {
-	Send(context.Context, string) (SendResult, error)
+	Send(context.Context, string) (notifier.SendResult, error)
 }
 
 // Config contains the monitor's scheduling and alerting settings.
@@ -111,7 +115,7 @@ func (m *Monitor) CheckOnce(ctx context.Context) {
 	m.handleFailure(ctx, result, checkedAt)
 }
 
-func (m *Monitor) handleHealthy(ctx context.Context, result Result, checkedAt time.Time) {
+func (m *Monitor) handleHealthy(ctx context.Context, result checker.Result, checkedAt time.Time) {
 	m.failures = 0
 	m.successes++
 
@@ -134,7 +138,7 @@ func (m *Monitor) handleHealthy(ctx context.Context, result Result, checkedAt ti
 	m.logger.Printf("%s recovered after %s", m.cfg.TargetName, downtime.Round(time.Second))
 
 	if m.cfg.NotifyRecovery && m.alertSent {
-		text := FormatRecovery(Recovery{
+		text := alert.FormatRecovery(alert.Recovery{
 			Instance:    m.cfg.InstanceName,
 			TargetName:  m.cfg.TargetName,
 			TargetURL:   m.cfg.TargetURL,
@@ -153,7 +157,7 @@ func (m *Monitor) handleHealthy(ctx context.Context, result Result, checkedAt ti
 	m.alertText = ""
 }
 
-func (m *Monitor) handleFailure(ctx context.Context, result Result, checkedAt time.Time) {
+func (m *Monitor) handleFailure(ctx context.Context, result checker.Result, checkedAt time.Time) {
 	m.successes = 0
 	if m.state != stateDown && m.failures == 0 {
 		m.firstFailureAt = checkedAt
@@ -186,8 +190,8 @@ func (m *Monitor) handleFailure(ctx context.Context, result Result, checkedAt ti
 	}
 }
 
-func (m *Monitor) formatDown(result Result) string {
-	return FormatDown(Down{
+func (m *Monitor) formatDown(result checker.Result) string {
+	return alert.FormatDown(alert.Down{
 		Instance:     m.cfg.InstanceName,
 		TargetName:   m.cfg.TargetName,
 		TargetURL:    m.cfg.TargetURL,

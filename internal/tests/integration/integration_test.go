@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"clinic-health-monitor/internal"
 	"context"
 	"encoding/json"
 	"io"
@@ -13,6 +12,10 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"clinic-health-monitor/internal/checker"
+	"clinic-health-monitor/internal/monitor"
+	"clinic-health-monitor/internal/notifier"
 )
 
 type sendBody struct {
@@ -70,13 +73,13 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 	}))
 	defer gateway.Close()
 
-	gatewayClient := internal.New(internal.Config{
+	gatewayClient := notifier.New(notifier.Config{
 		BaseURL: gateway.URL,
 		APIKey:  "test-key",
 		Timeout: time.Second,
 	}, []string{"10001", "10002"})
 
-	watcher := internal.New(internal.Config{
+	watcher := monitor.New(monitor.Config{
 		TargetName:        "clinic-backend",
 		TargetURL:         backend.URL,
 		InstanceName:      "test",
@@ -85,7 +88,7 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 		RecoveryThreshold: 1,
 		NotifyRecovery:    true,
 		Location:          time.UTC,
-	}, internal.New(backend.URL, time.Second), gatewayClient, log.New(io.Discard, "", 0))
+	}, checker.New(backend.URL, time.Second), gatewayClient, log.New(io.Discard, "", 0))
 
 	healthy.Store(false)
 	watcher.CheckOnce(context.Background())

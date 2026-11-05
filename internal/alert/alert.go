@@ -1,11 +1,13 @@
 // Package alert formats outage and recovery messages for maintainers.
-package internal
+package alert
 
 import (
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"clinic-health-monitor/internal/checker"
 )
 
 const maxDetailRunes = 300
@@ -17,7 +19,7 @@ type Down struct {
 	TargetURL    string
 	FirstFailure time.Time
 	Failures     int
-	Result       Result
+	Result       checker.Result
 	Location     *time.Location
 }
 
@@ -58,7 +60,7 @@ func FormatRecovery(info Recovery) string {
 	return b.String()
 }
 
-func formatResult(result Result) string {
+func formatResult(result checker.Result) string {
 	var b strings.Builder
 	if result.Err != nil {
 		fmt.Fprintf(&b, "Error: %s", truncate(result.Err.Error()))

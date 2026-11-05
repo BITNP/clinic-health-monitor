@@ -1,10 +1,11 @@
 package config_test
 
 import (
-	"clinic-health-monitor/internal"
 	"strings"
 	"testing"
 	"time"
+
+	"clinic-health-monitor/internal/config"
 )
 
 func validEnv() map[string]string {
@@ -15,8 +16,8 @@ func validEnv() map[string]string {
 	}
 }
 
-func loadEnv(env map[string]string) (internal.Config, error) {
-	return internal.Load(func(key string) string {
+func loadEnv(env map[string]string) (config.Config, error) {
+	return config.Load(func(key string) string {
 		return env[key]
 	})
 }

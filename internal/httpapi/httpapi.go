@@ -1,5 +1,5 @@
 // Package httpapi exposes the monitor's liveness endpoint.
-package internal
+package httpapi
 
 import "net/http"
 
