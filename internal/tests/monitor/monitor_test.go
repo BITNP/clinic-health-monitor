@@ -10,9 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"clinic-health-monitor/internal/checker"
-	"clinic-health-monitor/internal/monitor"
-	"clinic-health-monitor/internal/notifier"
+	"clinic-health-monitor/internal"
 )
 
 var baseTime = time.Date(2026, 11, 6, 14, 0, 0, 0, time.UTC)
@@ -20,11 +18,11 @@ var baseTime = time.Date(2026, 11, 6, 14, 0, 0, 0, time.UTC)
 type fakeChecker struct {
 	mu        sync.Mutex
 	calls     int
-	result    checker.Result
-	checkFunc func(call int) checker.Result
+	result    internal.Result
+	checkFunc func(call int) internal.Result
 }
 
-func (f *fakeChecker) Check(context.Context) checker.Result {
+func (f *fakeChecker) Check(context.Context) internal.Result {
 	f.mu.Lock()
 	f.calls++
 	call := f.calls
@@ -48,18 +46,18 @@ type fakeNotifier struct {
 	mu       sync.Mutex
 	calls    int
 	texts    []string
-	result   notifier.SendResult
+	result   internal.SendResult
 	err      error
-	sendFunc func(call int) (notifier.SendResult, error)
+	sendFunc func(call int) (internal.SendResult, error)
 }
 
 func newFakeNotifier() *fakeNotifier {
 	return &fakeNotifier{
-		result: notifier.SendResult{Attempted: 1, Succeeded: 1},
+		result: internal.SendResult{Attempted: 1, Succeeded: 1},
 	}
 }
 
-func (f *fakeNotifier) Send(_ context.Context, text string) (notifier.SendResult, error) {
+func (f *fakeNotifier) Send(_ context.Context, text string) (internal.SendResult, error) {
 	f.mu.Lock()
 	f.calls++
 	call := f.calls
@@ -87,8 +85,8 @@ func (f *fakeNotifier) messages() []string {
 	return append([]string(nil), f.texts...)
 }
 
-func testConfig() monitor.Config {
-	return monitor.Config{
+func testConfig() internal.MonitorConfig {
+	return internal.MonitorConfig{
 		TargetName:        "clinic-backend",
 		TargetURL:         "http://backend:8080/healthz",
 		InstanceName:      "test",
@@ -100,21 +98,21 @@ func testConfig() monitor.Config {
 	}
 }
 
-func newTestMonitor(cfg monitor.Config, healthChecker monitor.Checker, gateway monitor.Notifier) *monitor.Monitor {
-	return monitor.New(cfg, healthChecker, gateway, log.New(io.Discard, "", 0))
+func newTestMonitor(cfg internal.MonitorConfig, healthChecker internal.Checker, gateway internal.Notifier) *internal.Monitor {
+	return internal.NewMonitor(cfg, healthChecker, gateway, log.New(io.Discard, "", 0))
 }
 
-func healthyAt(at time.Time) checker.Result {
-	return checker.Result{Healthy: true, StatusCode: 200, CheckedAt: at}
+func healthyAt(at time.Time) internal.Result {
+	return internal.Result{Healthy: true, StatusCode: 200, CheckedAt: at}
 }
 
-func failedAt(at time.Time, status int) checker.Result {
-	return checker.Result{StatusCode: status, Body: `{"status":"unavailable"}`, CheckedAt: at}
+func failedAt(at time.Time, status int) internal.Result {
+	return internal.Result{StatusCode: status, Body: `{"status":"unavailable"}`, CheckedAt: at}
 }
 
-func sequenceChecker(results ...checker.Result) *fakeChecker {
+func sequenceChecker(results ...internal.Result) *fakeChecker {
 	return &fakeChecker{
-		checkFunc: func(call int) checker.Result {
+		checkFunc: func(call int) internal.Result {
 			if call > len(results) {
 				return results[len(results)-1]
 			}
@@ -153,7 +151,7 @@ func TestBelowFailureThresholdDoesNotNotify(t *testing.T) {
 
 func TestFailureThresholdSendsOneAlert(t *testing.T) {
 	healthChecker := &fakeChecker{
-		checkFunc: func(call int) checker.Result {
+		checkFunc: func(call int) internal.Result {
 			return failedAt(baseTime.Add(time.Duration(call-1)*time.Minute), 503)
 		},
 	}
@@ -183,11 +181,11 @@ func TestFailureThresholdSendsOneAlert(t *testing.T) {
 func TestFailedAlertIsRetried(t *testing.T) {
 	healthChecker := &fakeChecker{result: failedAt(baseTime, 503)}
 	gateway := newFakeNotifier()
-	gateway.sendFunc = func(call int) (notifier.SendResult, error) {
+	gateway.sendFunc = func(call int) (internal.SendResult, error) {
 		if call == 1 {
-			return notifier.SendResult{Attempted: 1, Failed: 1}, errors.New("gateway down")
+			return internal.SendResult{Attempted: 1, Failed: 1}, errors.New("gateway down")
 		}
-		return notifier.SendResult{Attempted: 1, Succeeded: 1}, nil
+		return internal.SendResult{Attempted: 1, Succeeded: 1}, nil
 	}
 	m := newTestMonitor(testConfig(), healthChecker, gateway)
 
@@ -203,8 +201,8 @@ func TestFailedAlertIsRetried(t *testing.T) {
 func TestPartialAlertSuccessClearsPending(t *testing.T) {
 	healthChecker := &fakeChecker{result: failedAt(baseTime, 503)}
 	gateway := newFakeNotifier()
-	gateway.sendFunc = func(int) (notifier.SendResult, error) {
-		return notifier.SendResult{Attempted: 2, Succeeded: 1, Failed: 1}, errors.New("one maintainer failed")
+	gateway.sendFunc = func(int) (internal.SendResult, error) {
+		return internal.SendResult{Attempted: 2, Succeeded: 1, Failed: 1}, errors.New("one maintainer failed")
 	}
 	m := newTestMonitor(testConfig(), healthChecker, gateway)
 
@@ -280,7 +278,7 @@ func TestRecoveryNotSentWhenAlertNeverDelivered(t *testing.T) {
 		healthyAt(baseTime.Add(3*time.Minute)),
 	)
 	gateway := newFakeNotifier()
-	gateway.result = notifier.SendResult{Attempted: 1, Failed: 1}
+	gateway.result = internal.SendResult{Attempted: 1, Failed: 1}
 	gateway.err = errors.New("gateway down")
 	m := newTestMonitor(testConfig(), healthChecker, gateway)
 
@@ -301,7 +299,7 @@ func TestAlertRepeat(t *testing.T) {
 	cfg := testConfig()
 	cfg.AlertRepeatInterval = 30 * time.Second
 	healthChecker := &fakeChecker{
-		checkFunc: func(call int) checker.Result {
+		checkFunc: func(call int) internal.Result {
 			return failedAt(baseTime.Add(time.Duration(call)*time.Minute), 503)
 		},
 	}
@@ -319,7 +317,7 @@ func TestAlertRepeat(t *testing.T) {
 
 func TestNoAlertRepeatByDefault(t *testing.T) {
 	healthChecker := &fakeChecker{
-		checkFunc: func(call int) checker.Result {
+		checkFunc: func(call int) internal.Result {
 			return failedAt(baseTime.Add(time.Duration(call)*time.Hour), 503)
 		},
 	}

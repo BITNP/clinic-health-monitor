@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"clinic-health-monitor/internal/httpapi"
+	"clinic-health-monitor/internal"
 )
 
 func TestHealthz(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
-	httpapi.New().ServeHTTP(recorder, request)
+	internal.NewHandler().ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", recorder.Code)
@@ -30,7 +30,7 @@ func TestHealthzRejectsOtherMethods(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
-	httpapi.New().ServeHTTP(recorder, request)
+	internal.NewHandler().ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d, want 405", recorder.Code)
@@ -41,7 +41,7 @@ func TestUnknownPath(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/status", nil)
 	recorder := httptest.NewRecorder()
 
-	httpapi.New().ServeHTTP(recorder, request)
+	internal.NewHandler().ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", recorder.Code)

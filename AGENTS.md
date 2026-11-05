@@ -11,9 +11,10 @@ those belong to the gateway.
 
 - Keep the service single-purpose: one health target, one monitor instance.
 - Use the standard library. Do not add dependencies without an explicit reason.
-- Keep `internal/config`, `internal/checker`, `internal/notifier`,
-  `internal/alert`, `internal/monitor`, and `internal/httpapi` separated by
-  responsibility.
+- Keep the flat `internal` package split by responsibility across
+  `config.go`, `checker.go`, `notifier.go`, `alert.go`, `monitor.go`, and
+  `httpapi.go`. Add new files to the same package rather than creating
+  subpackages.
 - Outbound calls must use `context.Context` and bounded HTTP timeouts.
 - Never log `MESSAGE_GATEWAY_API_KEY` or other secrets.
 - The monitor's own `/healthz` is a liveness endpoint only. It must not report

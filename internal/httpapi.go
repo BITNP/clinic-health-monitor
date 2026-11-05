@@ -1,11 +1,10 @@
-// Package httpapi exposes the monitor's liveness endpoint.
-package httpapi
+package internal
 
 import "net/http"
 
-// New returns the monitor's HTTP handler. The only endpoint is a liveness
-// check; it deliberately does not report the target backend's health.
-func New() http.Handler {
+// NewHandler returns the monitor's HTTP handler. The only endpoint is a
+// liveness check; it deliberately does not report the target backend's health.
+func NewHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handleHealth)
 	return mux

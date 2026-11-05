@@ -1,5 +1,4 @@
-// Package notifier sends outbound messages through message-gateway.
-package notifier
+package internal
 
 import (
 	"bytes"
@@ -20,8 +19,8 @@ const (
 	maxResponseBytes = 4 << 10
 )
 
-// Config contains the gateway connection settings.
-type Config struct {
+// NotifierConfig contains the gateway connection settings.
+type NotifierConfig struct {
 	BaseURL string
 	APIKey  string
 	Timeout time.Duration
@@ -53,9 +52,9 @@ type sendTarget struct {
 	ID   string `json:"id"`
 }
 
-// New creates a gateway client. The caller is expected to have validated the
-// base URL and target ids.
-func New(cfg Config, targets []string) *Client {
+// NewNotifier creates a gateway client. The caller is expected to have
+// validated the base URL and target ids.
+func NewNotifier(cfg NotifierConfig, targets []string) *Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
 

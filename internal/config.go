@@ -1,6 +1,6 @@
-// Package config loads and validates the health monitor's environment
-// configuration.
-package config
+// Package internal implements the clinic health monitor's configuration,
+// health checks, alerting, and HTTP endpoints.
+package internal
 
 import (
 	"errors"

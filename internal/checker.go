@@ -1,5 +1,4 @@
-// Package checker performs one HTTP health check against the configured target.
-package checker
+package internal
 
 import (
 	"context"
@@ -21,20 +20,20 @@ type Result struct {
 	CheckedAt  time.Time
 }
 
-// Checker performs HTTP health checks.
-type Checker struct {
+// HTTPChecker performs HTTP health checks.
+type HTTPChecker struct {
 	target string
 	client *http.Client
 }
 
-// New creates a checker for target. Non-2xx responses are unhealthy, and
-// redirects are not followed.
-func New(target string, timeout time.Duration) *Checker {
+// NewHTTPChecker creates a checker for target. Non-2xx responses are unhealthy,
+// and redirects are not followed.
+func NewHTTPChecker(target string, timeout time.Duration) *HTTPChecker {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	// The target is an internal service; do not route it through a proxy.
 	transport.Proxy = nil
 
-	return &Checker{
+	return &HTTPChecker{
 		target: target,
 		client: &http.Client{
 			Timeout:   timeout,
@@ -48,7 +47,7 @@ func New(target string, timeout time.Duration) *Checker {
 
 // Check performs one health-check attempt. The returned result is always
 // populated with CheckedAt so callers can report when the attempt happened.
-func (c *Checker) Check(ctx context.Context) Result {
+func (c *HTTPChecker) Check(ctx context.Context) Result {
 	checkedAt := time.Now()
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.target, nil)

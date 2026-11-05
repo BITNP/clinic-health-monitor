@@ -222,13 +222,13 @@ bounded backoff. `400`, `401`, and `413` are treated as configuration errors.
 ## Layout
 
 ```text
+internal/config.go                   environment loading and validation
+internal/checker.go                  one HTTP health check
+internal/notifier.go                 message-gateway HTTP client
+internal/alert.go                    outage and recovery message formatting
+internal/monitor.go                  polling loop and alert state machine
+internal/httpapi.go                  liveness endpoint
 internal/cmd/clinic-health-monitor/  service entry point
-internal/config/                     environment loading and validation
-internal/checker/                    one HTTP health check
-internal/notifier/                   message-gateway HTTP client
-internal/alert/                      outage and recovery message formatting
-internal/monitor/                    polling loop and alert state machine
-internal/httpapi/                    liveness endpoint
 internal/tests/                      external tests
 Dockerfile                  multi-stage image
 docker-compose.yml          standalone stack

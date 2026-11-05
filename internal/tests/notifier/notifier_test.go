@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"clinic-health-monitor/internal/notifier"
+	"clinic-health-monitor/internal"
 )
 
 type capturedRequest struct {
@@ -68,9 +68,9 @@ func (f *fakeGateway) captured() []capturedRequest {
 	return append([]capturedRequest(nil), f.requests...)
 }
 
-func newClient(t *testing.T, server *httptest.Server, targets ...string) *notifier.Client {
+func newClient(t *testing.T, server *httptest.Server, targets ...string) *internal.Client {
 	t.Helper()
-	return notifier.New(notifier.Config{
+	return internal.NewNotifier(internal.NotifierConfig{
 		BaseURL: server.URL,
 		APIKey:  "test-key",
 		Timeout: time.Second,
@@ -87,7 +87,7 @@ func TestSendDeliversToEveryMaintainer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Send() error = %v", err)
 	}
-	if result != (notifier.SendResult{Attempted: 2, Succeeded: 2}) {
+	if result != (internal.SendResult{Attempted: 2, Succeeded: 2}) {
 		t.Errorf("Send() result = %+v", result)
 	}
 
@@ -128,7 +128,7 @@ func TestSendTrimsTrailingSlashFromBaseURL(t *testing.T) {
 	server := httptest.NewServer(gateway)
 	defer server.Close()
 
-	client := notifier.New(notifier.Config{
+	client := internal.NewNotifier(internal.NotifierConfig{
 		BaseURL: server.URL + "/",
 		APIKey:  "test-key",
 		Timeout: time.Second,
@@ -166,7 +166,7 @@ func TestSendReturnsPermanentGatewayErrors(t *testing.T) {
 			if err == nil {
 				t.Fatal("Send() error = nil, want error")
 			}
-			if result != (notifier.SendResult{Attempted: 1, Failed: 1}) {
+			if result != (internal.SendResult{Attempted: 1, Failed: 1}) {
 				t.Errorf("Send() result = %+v", result)
 			}
 			if requests := gateway.captured(); len(requests) != 1 {
@@ -214,7 +214,7 @@ func TestSendRetriesServerErrors(t *testing.T) {
 	if err == nil {
 		t.Fatal("Send() error = nil, want error")
 	}
-	if result != (notifier.SendResult{Attempted: 1, Failed: 1}) {
+	if result != (internal.SendResult{Attempted: 1, Failed: 1}) {
 		t.Errorf("Send() result = %+v", result)
 	}
 	if requests := gateway.captured(); len(requests) != 3 {
@@ -237,7 +237,7 @@ func TestSendContinuesAfterPartialFailure(t *testing.T) {
 	if err == nil {
 		t.Fatal("Send() error = nil, want partial error")
 	}
-	if result != (notifier.SendResult{Attempted: 2, Succeeded: 1, Failed: 1}) {
+	if result != (internal.SendResult{Attempted: 2, Succeeded: 1, Failed: 1}) {
 		t.Errorf("Send() result = %+v", result)
 	}
 	if requests := gateway.captured(); len(requests) != 2 {
@@ -260,7 +260,7 @@ func TestSendStopsWhenContextIsCanceled(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("Send() error = %v, want context.Canceled", err)
 	}
-	if result != (notifier.SendResult{Attempted: 2, Failed: 2}) {
+	if result != (internal.SendResult{Attempted: 2, Failed: 2}) {
 		t.Errorf("Send() result = %+v", result)
 	}
 	if requests := gateway.captured(); len(requests) != 0 {

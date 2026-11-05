@@ -6,21 +6,20 @@ import (
 	"testing"
 	"time"
 
-	"clinic-health-monitor/internal/alert"
-	"clinic-health-monitor/internal/checker"
+	"clinic-health-monitor/internal"
 )
 
 var testLocation = time.FixedZone("CST", 8*60*60)
 
 func TestFormatDown(t *testing.T) {
 	firstFailure := time.Date(2026, 11, 6, 14, 5, 0, 0, testLocation)
-	text := alert.FormatDown(alert.Down{
+	text := internal.FormatDown(internal.Down{
 		Instance:     "clinic-prod",
 		TargetName:   "clinic-backend",
 		TargetURL:    "http://backend:8080/healthz",
 		FirstFailure: firstFailure,
 		Failures:     3,
-		Result: checker.Result{
+		Result: internal.Result{
 			StatusCode: 503,
 			Body:       `{"status":"unavailable","redis":"down"}`,
 		},
@@ -42,13 +41,13 @@ func TestFormatDown(t *testing.T) {
 }
 
 func TestFormatDownWithTransportError(t *testing.T) {
-	text := alert.FormatDown(alert.Down{
+	text := internal.FormatDown(internal.Down{
 		Instance:     "clinic-prod",
 		TargetName:   "clinic-backend",
 		TargetURL:    "http://backend:8080/healthz",
 		FirstFailure: time.Now(),
 		Failures:     1,
-		Result: checker.Result{
+		Result: internal.Result{
 			Err: errors.New("dial tcp 10.0.0.1:8080: connect: connection refused"),
 		},
 		Location: testLocation,
@@ -61,13 +60,13 @@ func TestFormatDownWithTransportError(t *testing.T) {
 
 func TestFormatDownTruncatesAndCollapsesDetail(t *testing.T) {
 	longBody := strings.Repeat("x", 1000)
-	text := alert.FormatDown(alert.Down{
+	text := internal.FormatDown(internal.Down{
 		Instance:     "clinic-prod",
 		TargetName:   "clinic-backend",
 		TargetURL:    "http://backend:8080/healthz",
 		FirstFailure: time.Now(),
 		Failures:     3,
-		Result: checker.Result{
+		Result: internal.Result{
 			StatusCode: 500,
 			Body:       "line one\nline two\n" + longBody,
 		},
@@ -92,7 +91,7 @@ func TestFormatRecovery(t *testing.T) {
 	downSince := time.Date(2026, 11, 6, 14, 5, 0, 0, testLocation)
 	recoveredAt := downSince.Add(2*time.Minute + 30*time.Second)
 
-	text := alert.FormatRecovery(alert.Recovery{
+	text := internal.FormatRecovery(internal.Recovery{
 		Instance:    "clinic-prod",
 		TargetName:  "clinic-backend",
 		TargetURL:   "http://backend:8080/healthz",

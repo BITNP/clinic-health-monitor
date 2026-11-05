@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"clinic-health-monitor/internal/config"
+	"clinic-health-monitor/internal"
 )
 
 func validEnv() map[string]string {
@@ -16,8 +16,8 @@ func validEnv() map[string]string {
 	}
 }
 
-func loadEnv(env map[string]string) (config.Config, error) {
-	return config.Load(func(key string) string {
+func loadEnv(env map[string]string) (internal.Config, error) {
+	return internal.Load(func(key string) string {
 		return env[key]
 	})
 }
