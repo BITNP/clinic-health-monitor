@@ -1,0 +1,12 @@
+# Local configuration and secrets.
+.env
+.env.*
+!.env.example
+
+# Build output.
+/clinic-health-monitor
+/dist/
+
+# Editor and OS files.
+.idea/
+.DS_Store

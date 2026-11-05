@@ -1,0 +1,9 @@
+.git
+.gitignore
+.idea
+.env
+.env.*
+!.env.example
+tests/
+README.md
+API.md
