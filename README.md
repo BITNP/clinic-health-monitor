@@ -142,8 +142,11 @@ go run ./cmd/clinic-health-monitor
 curl http://127.0.0.1:3001/_messages
 ```
 
-To test recovery, restart the monitor with a reachable
-`MONITOR_TARGET_URL` while the gateway is still running.
+To test recovery, keep the monitor running and make the same target start
+returning `200` again. A small local stub whose response can be switched, or
+stopping and restarting the backend while the monitor stays up, works. Do not
+restart the monitor: its state is in-memory, so a restart while the target is
+healthy starts a new baseline instead of sending a recovery message.
 
 ## Docker Compose
 
