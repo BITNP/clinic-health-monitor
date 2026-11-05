@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 go build \
     -trimpath \
     -ldflags="-s -w" \
     -o /out/clinic-health-monitor \
-    ./internal/cmd/clinic-health-monitor
+    ./cmd/clinic-health-monitor
 
 FROM alpine:3.21
 

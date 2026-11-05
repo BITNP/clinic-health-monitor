@@ -19,9 +19,10 @@ those belong to the gateway.
 - Never log `MESSAGE_GATEWAY_API_KEY` or other secrets.
 - The monitor's own `/healthz` is a liveness endpoint only. It must not report
   the target backend's health.
-- All Go code lives under `internal/`. Tests live under `internal/tests/`,
-  mirroring the package they exercise, and use external `_test` packages. A
-  test that needs private helpers may stay beside its package.
+- Production code lives in the flat `internal` package. The service entrypoint
+  is under `cmd/clinic-health-monitor/`. Tests live under `tests/`, mirroring
+  the package they exercise, and use external `_test` packages. A test that
+  needs private helpers may stay beside its package.
 - Update `README.md`, `API.md`, and `.env.example` in the same change whenever
   behavior or configuration changes.
 - Run before finishing:

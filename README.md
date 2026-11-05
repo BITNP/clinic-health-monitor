@@ -107,7 +107,7 @@ MONITOR_TARGET_URL=http://127.0.0.1:8080/healthz \
 MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
 MESSAGE_GATEWAY_API_KEY=replace-with-message-gateway-key \
 MAINTAINER_QQ_IDS=10001 \
-go run ./internal/cmd/clinic-health-monitor
+go run ./cmd/clinic-health-monitor
 ```
 
 The existing `clinic-backend/scripts/dev.sh` starts the backend, Redis, and
@@ -133,7 +133,7 @@ MAINTAINER_QQ_IDS=10001 \
 MONITOR_INTERVAL=1s \
 MONITOR_FAILURE_THRESHOLD=1 \
 MONITOR_TIMEOUT=1s \
-go run ./internal/cmd/clinic-health-monitor
+go run ./cmd/clinic-health-monitor
 ```
 
 `10001` is a friend in the fake NapCat. Wait for the alert, then inspect:
@@ -228,8 +228,8 @@ internal/notifier.go                 message-gateway HTTP client
 internal/alert.go                    outage and recovery message formatting
 internal/monitor.go                  polling loop and alert state machine
 internal/httpapi.go                  liveness endpoint
-internal/cmd/clinic-health-monitor/  service entry point
-internal/tests/                      external tests
+cmd/clinic-health-monitor/           service entry point
+tests/                               external tests
 Dockerfile                  multi-stage image
 docker-compose.yml          standalone stack
 .github/workflows/          CI and GHCR publishing
