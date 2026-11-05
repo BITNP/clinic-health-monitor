@@ -105,7 +105,7 @@ Run the monitor as a host binary:
 ```bash
 MONITOR_TARGET_URL=http://127.0.0.1:8080/healthz \
 MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
-MESSAGE_GATEWAY_API_KEY=<key from ../message-gateway/.env> \
+MESSAGE_GATEWAY_API_KEY=replace-with-message-gateway-key \
 MAINTAINER_QQ_IDS=10001 \
 go run ./cmd/clinic-health-monitor
 ```
@@ -128,7 +128,7 @@ Then run the monitor with:
 ```bash
 MONITOR_TARGET_URL=http://127.0.0.1:9/healthz \
 MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
-MESSAGE_GATEWAY_API_KEY=<key from ../message-gateway/.env> \
+MESSAGE_GATEWAY_API_KEY=replace-with-message-gateway-key \
 MAINTAINER_QQ_IDS=10001 \
 MONITOR_INTERVAL=1s \
 MONITOR_FAILURE_THRESHOLD=1 \
