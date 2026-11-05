@@ -1,0 +1,35 @@
+name: clinic-health-monitor
+
+# Standalone stack for local or alternative deployments. The production
+# deployment adds the monitor to clinic-backend/docker-compose.prod.yml so it
+# shares the backend and message-gateway networks.
+
+services:
+  clinic-health-monitor:
+    image: ghcr.io/bitnp/clinic-health-monitor:${HEALTH_MONITOR_IMAGE_TAG:-latest}
+    build:
+      context: .
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:${HEALTH_MONITOR_PORT:-8082}:8082"
+    networks:
+      - clinic
+      - message-gateway
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8082/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+networks:
+  clinic:
+    external: true
+    name: ${CLINIC_BACKEND_NETWORK:-clinic-backend_default}
+  message-gateway:
+    external: true
+    name: ${MESSAGE_GATEWAY_NETWORK:-message-gateway}
