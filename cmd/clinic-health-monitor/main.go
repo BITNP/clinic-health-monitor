@@ -30,25 +30,27 @@ func main() {
 		)
 	}
 
-	primaryTarget := cfg.Targets[0]
-	healthChecker := internal.NewHTTPChecker(primaryTarget.URL, cfg.Timeout)
 	gateway := internal.NewNotifier(internal.NotifierConfig{
 		BaseURL: cfg.GatewayURL,
 		APIKey:  cfg.GatewayAPIKey,
 		Timeout: cfg.GatewayTimeout,
 	}, cfg.MaintainerQQIDs)
 
-	watcher := internal.NewMonitor(internal.MonitorConfig{
-		TargetName:          primaryTarget.Name,
-		TargetURL:           primaryTarget.URL,
-		InstanceName:        cfg.InstanceName,
-		Interval:            cfg.Interval,
-		FailureThreshold:    cfg.FailureThreshold,
-		RecoveryThreshold:   cfg.RecoveryThreshold,
-		AlertRepeatInterval: cfg.AlertRepeatInterval,
-		NotifyRecovery:      cfg.NotifyRecovery,
-		Location:            cfg.Location,
-	}, healthChecker, gateway, log.Default())
+	monitors := make([]*internal.Monitor, 0, len(cfg.Targets))
+	for _, target := range cfg.Targets {
+		healthChecker := internal.NewHTTPChecker(target.URL, cfg.Timeout)
+		monitors = append(monitors, internal.NewMonitor(internal.MonitorConfig{
+			TargetName:          target.Name,
+			TargetURL:           target.URL,
+			InstanceName:        cfg.InstanceName,
+			Interval:            cfg.Interval,
+			FailureThreshold:    cfg.FailureThreshold,
+			RecoveryThreshold:   cfg.RecoveryThreshold,
+			AlertRepeatInterval: cfg.AlertRepeatInterval,
+			NotifyRecovery:      cfg.NotifyRecovery,
+			Location:            cfg.Location,
+		}, healthChecker, gateway, log.Default()))
+	}
 
 	listener, err := net.Listen("tcp", cfg.HTTPAddr)
 	if err != nil {
@@ -69,11 +71,13 @@ func main() {
 
 	runCtx, cancel := context.WithCancel(context.Background())
 	var background sync.WaitGroup
-	background.Add(1)
-	go func() {
-		defer background.Done()
-		watcher.Run(runCtx)
-	}()
+	for _, watcher := range monitors {
+		background.Add(1)
+		go func(watcher *internal.Monitor) {
+			defer background.Done()
+			watcher.Run(runCtx)
+		}(watcher)
+	}
 
 	serveErr := make(chan error, 1)
 	go func() {
@@ -81,14 +85,17 @@ func main() {
 	}()
 
 	log.Printf(
-		"clinic-health-monitor listening on %s (target %s, interval %s, failure threshold %d, recovery threshold %d, maintainers %d)",
+		"clinic-health-monitor listening on %s (targets %d, interval %s, failure threshold %d, recovery threshold %d, maintainers %d)",
 		cfg.HTTPAddr,
-		primaryTarget.URL,
+		len(cfg.Targets),
 		cfg.Interval,
 		cfg.FailureThreshold,
 		cfg.RecoveryThreshold,
 		len(cfg.MaintainerQQIDs),
 	)
+	for _, target := range cfg.Targets {
+		log.Printf("monitoring %s at %s", target.Name, target.URL)
+	}
 
 	exitCode := 0
 	select {
