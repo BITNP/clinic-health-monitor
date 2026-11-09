@@ -7,7 +7,7 @@ endpoint on an internal network.
 ## `GET /healthz`
 
 **Description:** Liveness check for the monitor process. Public. It does not
-check the target backend, the message gateway, or NapCat. A `200` only means
+check any configured target, the message gateway, or NapCat. A `200` only means
 this process is running.
 
 **Request:** No body, no parameters.

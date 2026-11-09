@@ -2,14 +2,17 @@
 
 ## Project
 
-Standalone Go service that checks `clinic-backend` over HTTP and sends outage
-and recovery messages to maintainers through `message-gateway`. It does not
-talk to NapCat directly and does not own message queues, pacing, or retries;
-those belong to the gateway.
+Standalone Go service that checks the clinic backend and admin frontend over
+HTTP and sends outage and recovery messages to maintainers through
+`message-gateway`. It does not talk to NapCat directly and does not own message
+queues, pacing, or retries; those belong to the gateway.
 
 ## Rules
 
-- Keep the service single-purpose: one health target, one monitor instance.
+- Keep the service single-purpose: monitor the fixed clinic targets (backend
+  and admin frontend). Do not turn it into a general monitoring platform.
+- Run one `internal.Monitor` per configured target. Each target owns its own
+  failure and recovery state; the process is still a single monitor instance.
 - Use the standard library. Do not add dependencies without an explicit reason.
 - Keep the flat `internal` package split by responsibility across
   `config.go`, `checker.go`, `notifier.go`, `alert.go`, `monitor.go`, and

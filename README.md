@@ -1,13 +1,15 @@
 # clinic-health-monitor
 
-Standalone service that watches `clinic-backend`'s `/healthz` endpoint and
-notifies maintainers through `message-gateway` when the backend stays unhealthy.
+Standalone service that watches the clinic backend's `/healthz` endpoint and
+the admin frontend's `/` endpoint, and notifies maintainers through
+`message-gateway` when either target stays unhealthy.
 
-It owns only the polling and alerting state machine. QQ/NapCat transport,
+It owns only the polling and alerting state machines. QQ/NapCat transport,
 queues, pacing, and delivery retries belong to `message-gateway`.
 
 ## Features
 
+- Backend and admin frontend targets with independent outage state.
 - Configurable health-check interval, timeout, and failure/recovery thresholds.
 - One outage alert per maintainer instead of one alert per failed poll.
 - Optional repeat alerts for long outages.
@@ -19,8 +21,13 @@ queues, pacing, and delivery retries belong to `message-gateway`.
 
 ## Health contract
 
-The monitor calls `MONITOR_TARGET_URL`, which should be the backend's existing
-`GET /healthz` endpoint.
+The monitor calls each configured target:
+
+- `MONITOR_TARGET_URL` should be the backend's existing `GET /healthz` endpoint.
+- `MONITOR_FRONTEND_URL` is optional and should be the admin frontend's `GET /`
+  endpoint.
+
+The contract is the same for every target:
 
 - `2xx` means healthy.
 - Any non-`2xx`, redirect, timeout, DNS failure, or connection error means
@@ -28,13 +35,18 @@ The monitor calls `MONITOR_TARGET_URL`, which should be the backend's existing
 - The response body is not parsed in v1; the HTTP status code is the contract.
 - A response-body snippet is included in alert messages for diagnostics.
 
+The frontend `/` check proves Caddy is running and serving the built
+`index.html`. It does not execute JavaScript or verify the public Traefik/TLS
+path.
+
 The current backend `/healthz` only checks Redis. A database or object-storage
 failure may still return `200`. If deeper coverage is needed, add a backend
 `/readyz` endpoint and point `MONITOR_TARGET_URL` at it.
 
 ## Alert behavior
 
-The monitor uses three states: `Unknown`, `Healthy`, and `Down`.
+Each target uses three states: `Unknown`, `Healthy`, and `Down`. Targets have
+independent failure counters, alerts, and recovery tracking.
 
 - Failures are counted consecutively.
 - After `MONITOR_FAILURE_THRESHOLD` failures, the target enters `Down` and one
@@ -47,7 +59,9 @@ The monitor uses three states: `Unknown`, `Healthy`, and `Down`.
 - A recovery message is sent when `MONITOR_NOTIFY_RECOVERY=true` and an outage
   alert was actually delivered to at least one maintainer.
 
-With the defaults, a backend outage is reported after roughly 60–90 seconds.
+With the defaults, an outage is reported after roughly 60–90 seconds. If the
+whole clinic pod is down, maintainers may receive one backend alert and one
+frontend alert.
 
 Example outage message:
 
@@ -78,7 +92,9 @@ restart the service after changing it.
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `MONITOR_TARGET_URL` | yes | — | Backend health endpoint. |
-| `MONITOR_TARGET_NAME` | no | `clinic-backend` | Target name used in messages. |
+| `MONITOR_TARGET_NAME` | no | `clinic-backend` | Backend target name used in messages. |
+| `MONITOR_FRONTEND_URL` | no | — | Optional admin frontend endpoint. Empty disables frontend monitoring. |
+| `MONITOR_FRONTEND_NAME` | no | `clinic-admin-frontend` | Frontend target name used in messages. |
 | `MONITOR_INTERVAL` | no | `30s` | Delay between checks. |
 | `MONITOR_TIMEOUT` | no | `5s` | Per-check HTTP timeout. |
 | `MONITOR_FAILURE_THRESHOLD` | no | `3` | Consecutive failures before an outage alert. |
@@ -109,6 +125,9 @@ MESSAGE_GATEWAY_API_KEY=replace-with-message-gateway-key \
 MAINTAINER_QQ_IDS=10001 \
 go run ./cmd/clinic-health-monitor
 ```
+
+Add `MONITOR_FRONTEND_URL=http://127.0.0.1:5173/` to also check a locally
+running admin frontend.
 
 The existing `clinic-backend/scripts/dev.sh` starts the backend, Redis, and
 `message-gateway`; it does not start this monitor.
@@ -171,8 +190,8 @@ network and the external `message-gateway` network. See the
 ## Liveness
 
 `GET /healthz` on `MONITOR_HTTP_ADDR` reports only whether the monitor process
-is running. It does not report backend health; otherwise Docker would restart
-the monitor whenever the backend is down. See [API.md](API.md).
+is running. It does not report any target's health; otherwise Docker would
+restart the monitor whenever a target is down. See [API.md](API.md).
 
 ## Notification delivery
 
@@ -203,12 +222,16 @@ bounded backoff. `400`, `401`, and `413` are treated as configuration errors.
 - **Frequent false alarms**: raise `MONITOR_FAILURE_THRESHOLD` or
   `MONITOR_INTERVAL`, and keep `MONITOR_TIMEOUT` shorter than
   `MONITOR_INTERVAL`.
-- **Backend is healthy but the monitor reports failure**: verify the monitor
-  can reach `MONITOR_TARGET_URL` from its container network.
+- **A target is healthy but the monitor reports failure**: verify the monitor
+  can reach the configured `MONITOR_TARGET_URL` or `MONITOR_FRONTEND_URL` from
+  its container network.
 
 ## Limitations
 
 - The backend `/healthz` only checks Redis, not Postgres or S3.
+- The frontend `/` check only verifies Caddy serves `index.html`; it does not
+  execute JavaScript or check the public Traefik/TLS path.
+- A full clinic pod outage can produce one alert per target.
 - If `message-gateway` or NapCat is down, alerts cannot be delivered. The
   monitor logs the failure; there is no secondary channel.
 - `202` does not guarantee QQ delivery. The gateway queue is in-memory.
