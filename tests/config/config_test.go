@@ -133,6 +133,51 @@ func TestLoadCustomValues(t *testing.T) {
 	}
 }
 
+func TestLoadFrontendTarget(t *testing.T) {
+	tests := []struct {
+		name     string
+		mutate   func(map[string]string)
+		wantName string
+	}{
+		{
+			name: "default name",
+			mutate: func(env map[string]string) {
+				env["MONITOR_FRONTEND_URL"] = "http://127.0.0.1:5173/"
+			},
+			wantName: "clinic-admin-frontend",
+		},
+		{
+			name: "custom name",
+			mutate: func(env map[string]string) {
+				env["MONITOR_FRONTEND_URL"] = "http://127.0.0.1:5173/"
+				env["MONITOR_FRONTEND_NAME"] = "admin-frontend"
+			},
+			wantName: "admin-frontend",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := validEnv()
+			tt.mutate(env)
+
+			cfg, err := loadEnv(env)
+			if err != nil {
+				t.Fatalf("Load() error = %v", err)
+			}
+			if len(cfg.Targets) != 2 {
+				t.Fatalf("Targets = %v, want 2 targets", cfg.Targets)
+			}
+			if cfg.Targets[1].Name != tt.wantName {
+				t.Errorf("Targets[1].Name = %q, want %q", cfg.Targets[1].Name, tt.wantName)
+			}
+			if cfg.Targets[1].URL != "http://127.0.0.1:5173/" {
+				t.Errorf("Targets[1].URL = %q", cfg.Targets[1].URL)
+			}
+		})
+	}
+}
+
 func TestMaintainerIDsAreTrimmedAndDeduplicated(t *testing.T) {
 	env := validEnv()
 	env["MAINTAINER_QQ_IDS"] = " 10001, 10002,10001 ,10003 "
@@ -173,6 +218,29 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 			name:    "target URL without host",
 			mutate:  func(env map[string]string) { env["MONITOR_TARGET_URL"] = "http://" },
 			wantErr: "host",
+		},
+		{
+			name:    "invalid frontend URL",
+			mutate:  func(env map[string]string) { env["MONITOR_FRONTEND_URL"] = "frontend:80" },
+			wantErr: "MONITOR_FRONTEND_URL",
+		},
+		{
+			name:    "frontend URL without host",
+			mutate:  func(env map[string]string) { env["MONITOR_FRONTEND_URL"] = "http://" },
+			wantErr: "host",
+		},
+		{
+			name:    "frontend name without URL",
+			mutate:  func(env map[string]string) { env["MONITOR_FRONTEND_NAME"] = "clinic-admin-frontend" },
+			wantErr: "MONITOR_FRONTEND_NAME",
+		},
+		{
+			name: "duplicate target name",
+			mutate: func(env map[string]string) {
+				env["MONITOR_FRONTEND_URL"] = "http://127.0.0.1:5173/"
+				env["MONITOR_FRONTEND_NAME"] = "clinic-backend"
+			},
+			wantErr: "duplicate target name",
 		},
 		{
 			name:    "invalid interval",
