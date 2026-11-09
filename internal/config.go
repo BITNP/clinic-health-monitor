@@ -19,14 +19,20 @@ const (
 	defaultHTTPAddr          = ":8082"
 	defaultInstanceName      = "clinic-health-monitor"
 	defaultTargetName        = "clinic-backend"
+	defaultFrontendName      = "clinic-admin-frontend"
 	defaultGatewayURL        = "http://message-gateway:8081"
 	defaultGatewayTimeout    = 5 * time.Second
 )
 
+// Target is one HTTP health-check target.
+type Target struct {
+	Name string
+	URL  string
+}
+
 // Config is the validated runtime configuration for the health monitor.
 type Config struct {
-	TargetURL  string
-	TargetName string
+	Targets []Target
 
 	Interval            time.Duration
 	Timeout             time.Duration
@@ -47,14 +53,9 @@ type Config struct {
 
 // Load reads and validates the health monitor environment.
 func Load(getenv func(string) string) (Config, error) {
-	targetURL, err := validateHTTPURL("MONITOR_TARGET_URL", getenv("MONITOR_TARGET_URL"))
+	targets, err := parseTargets(getenv)
 	if err != nil {
 		return Config{}, err
-	}
-
-	targetName := strings.TrimSpace(getenv("MONITOR_TARGET_NAME"))
-	if targetName == "" {
-		targetName = defaultTargetName
 	}
 
 	interval, err := parsePositiveDuration("MONITOR_INTERVAL", getenv("MONITOR_INTERVAL"), defaultInterval)
@@ -131,8 +132,7 @@ func Load(getenv func(string) string) (Config, error) {
 	}
 
 	return Config{
-		TargetURL:  targetURL,
-		TargetName: targetName,
+		Targets: targets,
 
 		Interval:            interval,
 		Timeout:             timeout,
@@ -150,6 +150,50 @@ func Load(getenv func(string) string) (Config, error) {
 		GatewayAPIKey:   gatewayAPIKey,
 		GatewayTimeout:  gatewayTimeout,
 	}, nil
+}
+
+func parseTargets(getenv func(string) string) ([]Target, error) {
+	backendURL, err := validateHTTPURL("MONITOR_TARGET_URL", getenv("MONITOR_TARGET_URL"))
+	if err != nil {
+		return nil, err
+	}
+
+	backendName := strings.TrimSpace(getenv("MONITOR_TARGET_NAME"))
+	if backendName == "" {
+		backendName = defaultTargetName
+	}
+
+	targets := []Target{{Name: backendName, URL: backendURL}}
+
+	frontendURL := strings.TrimSpace(getenv("MONITOR_FRONTEND_URL"))
+	frontendName := strings.TrimSpace(getenv("MONITOR_FRONTEND_NAME"))
+	if frontendURL == "" {
+		if frontendName != "" {
+			return nil, errors.New("MONITOR_FRONTEND_NAME requires MONITOR_FRONTEND_URL")
+		}
+	} else {
+		frontendURL, err = validateHTTPURL("MONITOR_FRONTEND_URL", frontendURL)
+		if err != nil {
+			return nil, err
+		}
+		if frontendName == "" {
+			frontendName = defaultFrontendName
+		}
+		targets = append(targets, Target{Name: frontendName, URL: frontendURL})
+	}
+
+	seen := make(map[string]struct{}, len(targets))
+	for _, target := range targets {
+		if target.Name == "" {
+			return nil, errors.New("target name must not be empty")
+		}
+		if _, ok := seen[target.Name]; ok {
+			return nil, fmt.Errorf("duplicate target name %q", target.Name)
+		}
+		seen[target.Name] = struct{}{}
+	}
+
+	return targets, nil
 }
 
 func validateHTTPURL(name, raw string) (string, error) {

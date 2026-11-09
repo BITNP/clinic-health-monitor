@@ -28,11 +28,14 @@ func TestLoadDefaults(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.TargetURL != "http://127.0.0.1:8080/healthz" {
-		t.Errorf("TargetURL = %q", cfg.TargetURL)
+	if len(cfg.Targets) != 1 {
+		t.Fatalf("Targets = %v, want 1 target", cfg.Targets)
 	}
-	if cfg.TargetName != "clinic-backend" {
-		t.Errorf("TargetName = %q", cfg.TargetName)
+	if cfg.Targets[0].URL != "http://127.0.0.1:8080/healthz" {
+		t.Errorf("Targets[0].URL = %q", cfg.Targets[0].URL)
+	}
+	if cfg.Targets[0].Name != "clinic-backend" {
+		t.Errorf("Targets[0].Name = %q", cfg.Targets[0].Name)
 	}
 	if cfg.Interval != 30*time.Second {
 		t.Errorf("Interval = %s", cfg.Interval)
@@ -89,8 +92,11 @@ func TestLoadCustomValues(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.TargetName != "production-backend" {
-		t.Errorf("TargetName = %q", cfg.TargetName)
+	if len(cfg.Targets) != 1 {
+		t.Fatalf("Targets = %v, want 1 target", cfg.Targets)
+	}
+	if cfg.Targets[0].Name != "production-backend" {
+		t.Errorf("Targets[0].Name = %q", cfg.Targets[0].Name)
 	}
 	if cfg.Interval != time.Minute {
 		t.Errorf("Interval = %s", cfg.Interval)

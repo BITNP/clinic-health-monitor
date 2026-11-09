@@ -30,7 +30,8 @@ func main() {
 		)
 	}
 
-	healthChecker := internal.NewHTTPChecker(cfg.TargetURL, cfg.Timeout)
+	primaryTarget := cfg.Targets[0]
+	healthChecker := internal.NewHTTPChecker(primaryTarget.URL, cfg.Timeout)
 	gateway := internal.NewNotifier(internal.NotifierConfig{
 		BaseURL: cfg.GatewayURL,
 		APIKey:  cfg.GatewayAPIKey,
@@ -38,8 +39,8 @@ func main() {
 	}, cfg.MaintainerQQIDs)
 
 	watcher := internal.NewMonitor(internal.MonitorConfig{
-		TargetName:          cfg.TargetName,
-		TargetURL:           cfg.TargetURL,
+		TargetName:          primaryTarget.Name,
+		TargetURL:           primaryTarget.URL,
 		InstanceName:        cfg.InstanceName,
 		Interval:            cfg.Interval,
 		FailureThreshold:    cfg.FailureThreshold,
@@ -82,7 +83,7 @@ func main() {
 	log.Printf(
 		"clinic-health-monitor listening on %s (target %s, interval %s, failure threshold %d, recovery threshold %d, maintainers %d)",
 		cfg.HTTPAddr,
-		cfg.TargetURL,
+		primaryTarget.URL,
 		cfg.Interval,
 		cfg.FailureThreshold,
 		cfg.RecoveryThreshold,
