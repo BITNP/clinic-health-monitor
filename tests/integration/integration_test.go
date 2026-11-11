@@ -68,8 +68,7 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 	defer gateway.Close()
 
 	gatewayClient := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL:      gateway.URL,
-		Account:      "qq",
+		BaseURL:      gateway.URL + "/api/v1/accounts/qq",
 		AccountToken: "test-token",
 		Timeout:      time.Second,
 	}, []string{"10001", "10002"})
@@ -171,8 +170,7 @@ func TestTargetsAlertIndependently(t *testing.T) {
 	defer gateway.Close()
 
 	gatewayClient := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL:      gateway.URL,
-		Account:      "qq",
+		BaseURL:      gateway.URL + "/api/v1/accounts/qq",
 		AccountToken: "test-token",
 		Timeout:      time.Second,
 	}, []string{"10001", "10002"})

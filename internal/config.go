@@ -20,8 +20,7 @@ const (
 	defaultInstanceName      = "clinic-health-monitor"
 	defaultTargetName        = "clinic-backend"
 	defaultFrontendName      = "clinic-admin-frontend"
-	defaultGatewayURL        = "http://message-gateway:8081"
-	defaultGatewayAccount    = "qq"
+	defaultGatewayURL        = "http://message-gateway:8081/api/v1/accounts/qq"
 	defaultGatewayTimeout    = 5 * time.Second
 )
 
@@ -48,7 +47,6 @@ type Config struct {
 
 	MaintainerQQIDs     []string
 	GatewayURL          string
-	GatewayAccount      string
 	GatewayAccountToken string
 	GatewayTimeout      time.Duration
 }
@@ -113,10 +111,9 @@ func Load(getenv func(string) string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-
-	gatewayAccount := strings.TrimSpace(getenv("MESSAGE_GATEWAY_ACCOUNT"))
-	if gatewayAccount == "" {
-		gatewayAccount = defaultGatewayAccount
+	parsedGatewayURL, err := url.Parse(gatewayURL)
+	if err != nil || parsedGatewayURL.RawQuery != "" || parsedGatewayURL.Fragment != "" {
+		return Config{}, errors.New("MESSAGE_GATEWAY_URL must not contain a query or fragment")
 	}
 
 	gatewayAccountToken := strings.TrimSpace(getenv("MESSAGE_GATEWAY_ACCOUNT_TOKEN"))
@@ -154,7 +151,6 @@ func Load(getenv func(string) string) (Config, error) {
 
 		MaintainerQQIDs:     maintainerIDs,
 		GatewayURL:          gatewayURL,
-		GatewayAccount:      gatewayAccount,
 		GatewayAccountToken: gatewayAccountToken,
 		GatewayTimeout:      gatewayTimeout,
 	}, nil

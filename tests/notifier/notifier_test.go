@@ -67,8 +67,7 @@ func (f *fakeGateway) captured() []capturedRequest {
 func newClient(t *testing.T, server *httptest.Server, targets ...string) *internal.Client {
 	t.Helper()
 	return internal.NewNotifier(internal.NotifierConfig{
-		BaseURL:      server.URL,
-		Account:      "qq",
+		BaseURL:      server.URL + "/api/v1/accounts/qq",
 		AccountToken: "test-token",
 		Timeout:      time.Second,
 	}, targets)
@@ -120,8 +119,7 @@ func TestSendTrimsTrailingSlashFromBaseURL(t *testing.T) {
 	defer server.Close()
 
 	client := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL:      server.URL + "/",
-		Account:      "qq",
+		BaseURL:      server.URL + "/api/v1/accounts/qq/",
 		AccountToken: "test-token",
 		Timeout:      time.Second,
 	}, []string{"10001"})
@@ -131,6 +129,22 @@ func TestSendTrimsTrailingSlashFromBaseURL(t *testing.T) {
 	}
 	requests := gateway.captured()
 	if len(requests) != 1 || requests[0].Path != "/api/v1/accounts/qq/send_private_msg_async" {
+		t.Fatalf("requests = %+v", requests)
+	}
+}
+
+func TestSendUsesConfiguredAccountBaseURL(t *testing.T) {
+	gateway := &fakeGateway{}
+	server := httptest.NewServer(gateway)
+	defer server.Close()
+	client := internal.NewNotifier(internal.NotifierConfig{
+		BaseURL: server.URL + "/custom/account", AccountToken: "test-token", Timeout: time.Second,
+	}, []string{"10001"})
+	if _, err := client.Send(context.Background(), "hello"); err != nil {
+		t.Fatal(err)
+	}
+	requests := gateway.captured()
+	if len(requests) != 1 || requests[0].Path != "/custom/account/send_private_msg_async" {
 		t.Fatalf("requests = %+v", requests)
 	}
 }

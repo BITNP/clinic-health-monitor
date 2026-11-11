@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +22,6 @@ const (
 // NotifierConfig contains the gateway connection settings.
 type NotifierConfig struct {
 	BaseURL      string
-	Account      string
 	AccountToken string
 	Timeout      time.Duration
 }
@@ -55,7 +53,7 @@ func NewNotifier(cfg NotifierConfig, targets []string) *Client {
 	transport.Proxy = nil
 
 	return &Client{
-		endpoint: strings.TrimRight(cfg.BaseURL, "/") + "/api/v1/accounts/" + url.PathEscape(cfg.Account) + "/send_private_msg_async",
+		endpoint: strings.TrimRight(cfg.BaseURL, "/") + "/send_private_msg_async",
 		token:    cfg.AccountToken,
 		targets:  append([]string(nil), targets...),
 		client: &http.Client{

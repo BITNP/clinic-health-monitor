@@ -104,8 +104,7 @@ restart the service after changing it.
 | `MONITOR_HTTP_ADDR` | no | `:8082` | Liveness HTTP listen address. |
 | `MONITOR_INSTANCE_NAME` | no | `clinic-health-monitor` | Instance name used in messages. |
 | `MAINTAINER_QQ_IDS` | yes | — | Comma-separated numeric QQ user ids. Duplicates are removed. |
-| `MESSAGE_GATEWAY_URL` | no | `http://message-gateway:8081` | Gateway base URL. |
-| `MESSAGE_GATEWAY_ACCOUNT` | no | `qq` | Gateway account used for alerts. |
+| `MESSAGE_GATEWAY_URL` | no | `http://message-gateway:8081/api/v1/accounts/qq` | Full account-scoped OneBot base URL. |
 | `MESSAGE_GATEWAY_ACCOUNT_TOKEN` | yes | — | The account's `client_token` from `message-gateway/accounts.json`. |
 | `MESSAGE_GATEWAY_TIMEOUT` | no | `5s` | Per-request gateway timeout. |
 | `TZ` | no | process local | Timezone used in message timestamps. |
@@ -121,8 +120,7 @@ Run the monitor as a host binary:
 
 ```bash
 MONITOR_TARGET_URL=http://127.0.0.1:8080/healthz \
-MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
-MESSAGE_GATEWAY_ACCOUNT=qq \
+MESSAGE_GATEWAY_URL=http://127.0.0.1:8081/api/v1/accounts/qq \
 MESSAGE_GATEWAY_ACCOUNT_TOKEN=replace-with-client-token \
 MAINTAINER_QQ_IDS=10001 \
 go run ./cmd/clinic-health-monitor
@@ -148,8 +146,7 @@ Then run the monitor with:
 
 ```bash
 MONITOR_TARGET_URL=http://127.0.0.1:9/healthz \
-MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
-MESSAGE_GATEWAY_ACCOUNT=qq \
+MESSAGE_GATEWAY_URL=http://127.0.0.1:8081/api/v1/accounts/qq \
 MESSAGE_GATEWAY_ACCOUNT_TOKEN=local-client-token \
 MAINTAINER_QQ_IDS=10001 \
 MONITOR_INTERVAL=1s \
@@ -178,8 +175,7 @@ The standalone stack is for local or alternative deployments. It expects the
 ```bash
 cp .env.example .env
 chmod 600 .env
-# Set MAINTAINER_QQ_IDS, MESSAGE_GATEWAY_ACCOUNT, and
-# MESSAGE_GATEWAY_ACCOUNT_TOKEN.
+# Set MAINTAINER_QQ_IDS and MESSAGE_GATEWAY_ACCOUNT_TOKEN.
 docker compose up -d --build
 docker compose logs -f clinic-health-monitor
 ```
@@ -224,7 +220,7 @@ errors.
 - **Monitor logs `401 Unauthorized`**: no `MESSAGE_GATEWAY_ACCOUNT_TOKEN` was
   configured.
 - **Monitor logs `403 Forbidden`**: `MESSAGE_GATEWAY_ACCOUNT_TOKEN` does not
-  match the `client_token` of `MESSAGE_GATEWAY_ACCOUNT` in the gateway's
+  match the `client_token` for the account in `MESSAGE_GATEWAY_URL` in the gateway's
   `accounts.json`.
 - **Monitor logs `429 Too Many Requests`**: the gateway queue is full; the
   monitor retries with backoff.

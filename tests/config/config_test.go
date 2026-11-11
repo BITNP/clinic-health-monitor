@@ -61,11 +61,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.InstanceName != "clinic-health-monitor" {
 		t.Errorf("InstanceName = %q", cfg.InstanceName)
 	}
-	if cfg.GatewayURL != "http://message-gateway:8081" {
+	if cfg.GatewayURL != "http://message-gateway:8081/api/v1/accounts/qq" {
 		t.Errorf("GatewayURL = %q", cfg.GatewayURL)
-	}
-	if cfg.GatewayAccount != "qq" {
-		t.Errorf("GatewayAccount = %q, want qq", cfg.GatewayAccount)
 	}
 	if cfg.GatewayAccountToken != "test-token" {
 		t.Errorf("GatewayAccountToken = %q", cfg.GatewayAccountToken)
@@ -89,8 +86,7 @@ func TestLoadCustomValues(t *testing.T) {
 	env["MONITOR_NOTIFY_RECOVERY"] = "false"
 	env["MONITOR_HTTP_ADDR"] = ":9090"
 	env["MONITOR_INSTANCE_NAME"] = "clinic-prod"
-	env["MESSAGE_GATEWAY_URL"] = "https://gateway.example.com"
-	env["MESSAGE_GATEWAY_ACCOUNT"] = "qq-backup"
+	env["MESSAGE_GATEWAY_URL"] = "https://gateway.example.com/custom/base"
 	env["MESSAGE_GATEWAY_TIMEOUT"] = "2s"
 	env["TZ"] = "UTC"
 
@@ -129,11 +125,8 @@ func TestLoadCustomValues(t *testing.T) {
 	if cfg.InstanceName != "clinic-prod" {
 		t.Errorf("InstanceName = %q", cfg.InstanceName)
 	}
-	if cfg.GatewayURL != "https://gateway.example.com" {
+	if cfg.GatewayURL != "https://gateway.example.com/custom/base" {
 		t.Errorf("GatewayURL = %q", cfg.GatewayURL)
-	}
-	if cfg.GatewayAccount != "qq-backup" {
-		t.Errorf("GatewayAccount = %q, want qq-backup", cfg.GatewayAccount)
 	}
 	if cfg.GatewayTimeout != 2*time.Second {
 		t.Errorf("GatewayTimeout = %s", cfg.GatewayTimeout)
@@ -300,6 +293,16 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 		{
 			name:    "invalid gateway URL",
 			mutate:  func(env map[string]string) { env["MESSAGE_GATEWAY_URL"] = "message-gateway:8081" },
+			wantErr: "MESSAGE_GATEWAY_URL",
+		},
+		{
+			name:    "gateway URL query",
+			mutate:  func(env map[string]string) { env["MESSAGE_GATEWAY_URL"] = "https://gateway.example/qq?token=x" },
+			wantErr: "MESSAGE_GATEWAY_URL",
+		},
+		{
+			name:    "gateway URL fragment",
+			mutate:  func(env map[string]string) { env["MESSAGE_GATEWAY_URL"] = "https://gateway.example/qq#fragment" },
 			wantErr: "MESSAGE_GATEWAY_URL",
 		},
 		{

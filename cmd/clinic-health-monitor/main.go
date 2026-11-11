@@ -32,7 +32,6 @@ func main() {
 
 	gateway := internal.NewNotifier(internal.NotifierConfig{
 		BaseURL:      cfg.GatewayURL,
-		Account:      cfg.GatewayAccount,
 		AccountToken: cfg.GatewayAccountToken,
 		Timeout:      cfg.GatewayTimeout,
 	}, cfg.MaintainerQQIDs)
