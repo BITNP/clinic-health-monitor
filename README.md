@@ -106,7 +106,7 @@ restart the service after changing it.
 | `MAINTAINER_QQ_IDS` | yes | — | Comma-separated numeric QQ user ids. Duplicates are removed. |
 | `MESSAGE_GATEWAY_URL` | no | `http://message-gateway:8081` | Gateway base URL. |
 | `MESSAGE_GATEWAY_ACCOUNT` | no | `qq` | Gateway account used for alerts. |
-| `MESSAGE_GATEWAY_ACCOUNT_TOKEN` | yes | — | The account's `access_token` from `message-gateway/accounts.json`. |
+| `MESSAGE_GATEWAY_ACCOUNT_TOKEN` | yes | — | The account's `client_token` from `message-gateway/accounts.json`. |
 | `MESSAGE_GATEWAY_TIMEOUT` | no | `5s` | Per-request gateway timeout. |
 | `TZ` | no | process local | Timezone used in message timestamps. |
 
@@ -123,7 +123,7 @@ Run the monitor as a host binary:
 MONITOR_TARGET_URL=http://127.0.0.1:8080/healthz \
 MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
 MESSAGE_GATEWAY_ACCOUNT=qq \
-MESSAGE_GATEWAY_ACCOUNT_TOKEN=replace-with-account-access-token \
+MESSAGE_GATEWAY_ACCOUNT_TOKEN=replace-with-client-token \
 MAINTAINER_QQ_IDS=10001 \
 go run ./cmd/clinic-health-monitor
 ```
@@ -150,7 +150,7 @@ Then run the monitor with:
 MONITOR_TARGET_URL=http://127.0.0.1:9/healthz \
 MESSAGE_GATEWAY_URL=http://127.0.0.1:8081 \
 MESSAGE_GATEWAY_ACCOUNT=qq \
-MESSAGE_GATEWAY_ACCOUNT_TOKEN=replace-with-account-access-token \
+MESSAGE_GATEWAY_ACCOUNT_TOKEN=local-client-token \
 MAINTAINER_QQ_IDS=10001 \
 MONITOR_INTERVAL=1s \
 MONITOR_FAILURE_THRESHOLD=1 \
@@ -218,12 +218,13 @@ errors.
 ## Troubleshooting
 
 - **No messages arrive**: check `docker compose logs message-gateway` in
-  `message-gateway`, confirm the account token matches, and confirm the
+  `message-gateway`, confirm the client token matches, and confirm the
   maintainers are friends of the QQ bot or share a group with it.
 - **Monitor logs `401 Unauthorized`**: no `MESSAGE_GATEWAY_ACCOUNT_TOKEN` was
   configured.
 - **Monitor logs `403 Forbidden`**: `MESSAGE_GATEWAY_ACCOUNT_TOKEN` does not
-  match `MESSAGE_GATEWAY_ACCOUNT` in the gateway's `accounts.json`.
+  match the `client_token` of `MESSAGE_GATEWAY_ACCOUNT` in the gateway's
+  `accounts.json`.
 - **Monitor logs `429 Too Many Requests`**: the gateway queue is full; the
   monitor retries with backoff.
 - **Frequent false alarms**: raise `MONITOR_FAILURE_THRESHOLD` or
