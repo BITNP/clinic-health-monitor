@@ -31,9 +31,10 @@ func main() {
 	}
 
 	gateway := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL: cfg.GatewayURL,
-		APIKey:  cfg.GatewayAPIKey,
-		Timeout: cfg.GatewayTimeout,
+		BaseURL:      cfg.GatewayURL,
+		Account:      cfg.GatewayAccount,
+		AccountToken: cfg.GatewayAccountToken,
+		Timeout:      cfg.GatewayTimeout,
 	}, cfg.MaintainerQQIDs)
 
 	monitors := make([]*internal.Monitor, 0, len(cfg.Targets))

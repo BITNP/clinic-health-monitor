@@ -21,6 +21,7 @@ const (
 	defaultTargetName        = "clinic-backend"
 	defaultFrontendName      = "clinic-admin-frontend"
 	defaultGatewayURL        = "http://message-gateway:8081"
+	defaultGatewayAccount    = "qq"
 	defaultGatewayTimeout    = 5 * time.Second
 )
 
@@ -45,10 +46,11 @@ type Config struct {
 	InstanceName string
 	Location     *time.Location
 
-	MaintainerQQIDs []string
-	GatewayURL      string
-	GatewayAPIKey   string
-	GatewayTimeout  time.Duration
+	MaintainerQQIDs     []string
+	GatewayURL          string
+	GatewayAccount      string
+	GatewayAccountToken string
+	GatewayTimeout      time.Duration
 }
 
 // Load reads and validates the health monitor environment.
@@ -112,9 +114,14 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 
-	gatewayAPIKey := strings.TrimSpace(getenv("MESSAGE_GATEWAY_API_KEY"))
-	if gatewayAPIKey == "" {
-		return Config{}, errors.New("MESSAGE_GATEWAY_API_KEY is required")
+	gatewayAccount := strings.TrimSpace(getenv("MESSAGE_GATEWAY_ACCOUNT"))
+	if gatewayAccount == "" {
+		gatewayAccount = defaultGatewayAccount
+	}
+
+	gatewayAccountToken := strings.TrimSpace(getenv("MESSAGE_GATEWAY_ACCOUNT_TOKEN"))
+	if gatewayAccountToken == "" {
+		return Config{}, errors.New("MESSAGE_GATEWAY_ACCOUNT_TOKEN is required")
 	}
 
 	gatewayTimeout, err := parsePositiveDuration("MESSAGE_GATEWAY_TIMEOUT", getenv("MESSAGE_GATEWAY_TIMEOUT"), defaultGatewayTimeout)
@@ -145,10 +152,11 @@ func Load(getenv func(string) string) (Config, error) {
 		InstanceName: instanceName,
 		Location:     location,
 
-		MaintainerQQIDs: maintainerIDs,
-		GatewayURL:      gatewayURL,
-		GatewayAPIKey:   gatewayAPIKey,
-		GatewayTimeout:  gatewayTimeout,
+		MaintainerQQIDs:     maintainerIDs,
+		GatewayURL:          gatewayURL,
+		GatewayAccount:      gatewayAccount,
+		GatewayAccountToken: gatewayAccountToken,
+		GatewayTimeout:      gatewayTimeout,
 	}, nil
 }
 

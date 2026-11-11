@@ -51,7 +51,7 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		if r.Header.Get("Authorization") != "Bearer test-key" {
+		if r.Header.Get("Authorization") != "Bearer test-token" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -72,9 +72,10 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 	defer gateway.Close()
 
 	gatewayClient := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL: gateway.URL,
-		APIKey:  "test-key",
-		Timeout: time.Second,
+		BaseURL:      gateway.URL,
+		Account:      "qq",
+		AccountToken: "test-token",
+		Timeout:      time.Second,
 	}, []string{"10001", "10002"})
 
 	watcher := internal.NewMonitor(internal.MonitorConfig{
@@ -153,7 +154,7 @@ func TestTargetsAlertIndependently(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		if r.Header.Get("Authorization") != "Bearer test-key" {
+		if r.Header.Get("Authorization") != "Bearer test-token" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -174,9 +175,10 @@ func TestTargetsAlertIndependently(t *testing.T) {
 	defer gateway.Close()
 
 	gatewayClient := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL: gateway.URL,
-		APIKey:  "test-key",
-		Timeout: time.Second,
+		BaseURL:      gateway.URL,
+		Account:      "qq",
+		AccountToken: "test-token",
+		Timeout:      time.Second,
 	}, []string{"10001", "10002"})
 
 	newMonitor := func(name, targetURL string) *internal.Monitor {

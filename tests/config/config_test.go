@@ -10,9 +10,9 @@ import (
 
 func validEnv() map[string]string {
 	return map[string]string{
-		"MONITOR_TARGET_URL":      "http://127.0.0.1:8080/healthz",
-		"MAINTAINER_QQ_IDS":       "10001,10002",
-		"MESSAGE_GATEWAY_API_KEY": "test-key",
+		"MONITOR_TARGET_URL":            "http://127.0.0.1:8080/healthz",
+		"MAINTAINER_QQ_IDS":             "10001,10002",
+		"MESSAGE_GATEWAY_ACCOUNT_TOKEN": "test-token",
 	}
 }
 
@@ -64,6 +64,12 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.GatewayURL != "http://message-gateway:8081" {
 		t.Errorf("GatewayURL = %q", cfg.GatewayURL)
 	}
+	if cfg.GatewayAccount != "qq" {
+		t.Errorf("GatewayAccount = %q, want qq", cfg.GatewayAccount)
+	}
+	if cfg.GatewayAccountToken != "test-token" {
+		t.Errorf("GatewayAccountToken = %q", cfg.GatewayAccountToken)
+	}
 	if cfg.GatewayTimeout != 5*time.Second {
 		t.Errorf("GatewayTimeout = %s", cfg.GatewayTimeout)
 	}
@@ -84,6 +90,7 @@ func TestLoadCustomValues(t *testing.T) {
 	env["MONITOR_HTTP_ADDR"] = ":9090"
 	env["MONITOR_INSTANCE_NAME"] = "clinic-prod"
 	env["MESSAGE_GATEWAY_URL"] = "https://gateway.example.com"
+	env["MESSAGE_GATEWAY_ACCOUNT"] = "qq-backup"
 	env["MESSAGE_GATEWAY_TIMEOUT"] = "2s"
 	env["TZ"] = "UTC"
 
@@ -124,6 +131,9 @@ func TestLoadCustomValues(t *testing.T) {
 	}
 	if cfg.GatewayURL != "https://gateway.example.com" {
 		t.Errorf("GatewayURL = %q", cfg.GatewayURL)
+	}
+	if cfg.GatewayAccount != "qq-backup" {
+		t.Errorf("GatewayAccount = %q, want qq-backup", cfg.GatewayAccount)
 	}
 	if cfg.GatewayTimeout != 2*time.Second {
 		t.Errorf("GatewayTimeout = %s", cfg.GatewayTimeout)
@@ -283,9 +293,9 @@ func TestLoadRejectsInvalidConfiguration(t *testing.T) {
 			wantErr: "non-numeric",
 		},
 		{
-			name:    "missing gateway key",
-			mutate:  func(env map[string]string) { delete(env, "MESSAGE_GATEWAY_API_KEY") },
-			wantErr: "MESSAGE_GATEWAY_API_KEY",
+			name:    "missing gateway account token",
+			mutate:  func(env map[string]string) { delete(env, "MESSAGE_GATEWAY_ACCOUNT_TOKEN") },
+			wantErr: "MESSAGE_GATEWAY_ACCOUNT_TOKEN",
 		},
 		{
 			name:    "invalid gateway URL",

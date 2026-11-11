@@ -21,9 +21,10 @@ const (
 
 // NotifierConfig contains the gateway connection settings.
 type NotifierConfig struct {
-	BaseURL string
-	APIKey  string
-	Timeout time.Duration
+	BaseURL      string
+	Account      string
+	AccountToken string
+	Timeout      time.Duration
 }
 
 // SendResult summarizes one notification fan-out.
@@ -36,7 +37,8 @@ type SendResult struct {
 // Client sends private QQ messages to a fixed set of maintainers.
 type Client struct {
 	endpoint string
-	apiKey   string
+	account  string
+	token    string
 	targets  []string
 	client   *http.Client
 }
@@ -60,7 +62,8 @@ func NewNotifier(cfg NotifierConfig, targets []string) *Client {
 
 	return &Client{
 		endpoint: strings.TrimRight(cfg.BaseURL, "/") + "/api/v1/messages",
-		apiKey:   cfg.APIKey,
+		account:  cfg.Account,
+		token:    cfg.AccountToken,
 		targets:  append([]string(nil), targets...),
 		client: &http.Client{
 			Timeout:   cfg.Timeout,
@@ -101,7 +104,7 @@ func (c *Client) Send(ctx context.Context, text string) (SendResult, error) {
 
 func (c *Client) sendTo(ctx context.Context, target, text string) error {
 	payload, err := json.Marshal(sendRequest{
-		Platform: "qq",
+		Platform: c.account,
 		Target:   sendTarget{Kind: "user", ID: target},
 		Text:     text,
 	})
@@ -131,7 +134,7 @@ func (c *Client) attempt(ctx context.Context, payload []byte) (time.Duration, bo
 	if err != nil {
 		return 0, false, fmt.Errorf("build request: %w", err)
 	}
-	request.Header.Set("Authorization", "Bearer "+c.apiKey)
+	request.Header.Set("Authorization", "Bearer "+c.token)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 

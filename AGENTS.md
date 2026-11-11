@@ -19,7 +19,7 @@ queues, pacing, or retries; those belong to the gateway.
   `httpapi.go`. Add new files to the same package rather than creating
   subpackages.
 - Outbound calls must use `context.Context` and bounded HTTP timeouts.
-- Never log `MESSAGE_GATEWAY_API_KEY` or other secrets.
+- Never log `MESSAGE_GATEWAY_ACCOUNT_TOKEN` or other secrets.
 - The monitor's own `/healthz` is a liveness endpoint only. It must not report
   the target backend's health.
 - Production code lives in the flat `internal` package. The service entrypoint

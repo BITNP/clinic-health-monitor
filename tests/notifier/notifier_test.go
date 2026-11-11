@@ -71,9 +71,10 @@ func (f *fakeGateway) captured() []capturedRequest {
 func newClient(t *testing.T, server *httptest.Server, targets ...string) *internal.Client {
 	t.Helper()
 	return internal.NewNotifier(internal.NotifierConfig{
-		BaseURL: server.URL,
-		APIKey:  "test-key",
-		Timeout: time.Second,
+		BaseURL:      server.URL,
+		Account:      "qq",
+		AccountToken: "test-token",
+		Timeout:      time.Second,
 	}, targets)
 }
 
@@ -102,7 +103,7 @@ func TestSendDeliversToEveryMaintainer(t *testing.T) {
 		if request.Path != "/api/v1/messages" {
 			t.Errorf("Path = %q", request.Path)
 		}
-		if request.Authorization != "Bearer test-key" {
+		if request.Authorization != "Bearer test-token" {
 			t.Errorf("Authorization = %q", request.Authorization)
 		}
 		if !strings.HasPrefix(request.ContentType, "application/json") {
@@ -129,9 +130,10 @@ func TestSendTrimsTrailingSlashFromBaseURL(t *testing.T) {
 	defer server.Close()
 
 	client := internal.NewNotifier(internal.NotifierConfig{
-		BaseURL: server.URL + "/",
-		APIKey:  "test-key",
-		Timeout: time.Second,
+		BaseURL:      server.URL + "/",
+		Account:      "qq",
+		AccountToken: "test-token",
+		Timeout:      time.Second,
 	}, []string{"10001"})
 
 	if _, err := client.Send(context.Background(), "hello"); err != nil {
