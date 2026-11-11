@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -37,21 +38,14 @@ type SendResult struct {
 // Client sends private QQ messages to a fixed set of maintainers.
 type Client struct {
 	endpoint string
-	account  string
 	token    string
 	targets  []string
 	client   *http.Client
 }
 
 type sendRequest struct {
-	Platform string     `json:"platform"`
-	Target   sendTarget `json:"target"`
-	Text     string     `json:"text"`
-}
-
-type sendTarget struct {
-	Kind string `json:"kind"`
-	ID   string `json:"id"`
+	UserID  string `json:"user_id"`
+	Message string `json:"message"`
 }
 
 // NewNotifier creates a gateway client. The caller is expected to have
@@ -61,8 +55,7 @@ func NewNotifier(cfg NotifierConfig, targets []string) *Client {
 	transport.Proxy = nil
 
 	return &Client{
-		endpoint: strings.TrimRight(cfg.BaseURL, "/") + "/api/v1/messages",
-		account:  cfg.Account,
+		endpoint: strings.TrimRight(cfg.BaseURL, "/") + "/api/v1/accounts/" + url.PathEscape(cfg.Account) + "/send_private_msg_async",
 		token:    cfg.AccountToken,
 		targets:  append([]string(nil), targets...),
 		client: &http.Client{
@@ -104,9 +97,8 @@ func (c *Client) Send(ctx context.Context, text string) (SendResult, error) {
 
 func (c *Client) sendTo(ctx context.Context, target, text string) error {
 	payload, err := json.Marshal(sendRequest{
-		Platform: c.account,
-		Target:   sendTarget{Kind: "user", ID: target},
-		Text:     text,
+		UserID:  target,
+		Message: text,
 	})
 	if err != nil {
 		return fmt.Errorf("encode request: %w", err)

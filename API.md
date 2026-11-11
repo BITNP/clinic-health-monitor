@@ -31,4 +31,4 @@ Found`.
 
 The monitor does not accept alert requests over HTTP. It calls the configured
 `message-gateway` endpoint itself; see `message-gateway/API.md` for that
-contract.
+account-scoped `send_private_msg_async` endpoint and its delivery semantics.

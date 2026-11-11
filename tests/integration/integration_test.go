@@ -17,12 +17,8 @@ import (
 )
 
 type sendBody struct {
-	Platform string `json:"platform"`
-	Target   struct {
-		Kind string `json:"kind"`
-		ID   string `json:"id"`
-	} `json:"target"`
-	Text string `json:"text"`
+	UserID  string `json:"user_id"`
+	Message string `json:"message"`
 }
 
 type sentMessage struct {
@@ -47,7 +43,7 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 	var mu sync.Mutex
 	var messages []sentMessage
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/messages" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/accounts/qq/send_private_msg_async" {
 			http.NotFound(w, r)
 			return
 		}
@@ -63,7 +59,7 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 		}
 
 		mu.Lock()
-		messages = append(messages, sentMessage{TargetID: body.Target.ID, Text: body.Text})
+		messages = append(messages, sentMessage{TargetID: body.UserID, Text: body.Message})
 		mu.Unlock()
 
 		w.WriteHeader(http.StatusAccepted)
@@ -150,7 +146,7 @@ func TestTargetsAlertIndependently(t *testing.T) {
 	var mu sync.Mutex
 	var messages []sentMessage
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/messages" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/accounts/qq/send_private_msg_async" {
 			http.NotFound(w, r)
 			return
 		}
@@ -166,7 +162,7 @@ func TestTargetsAlertIndependently(t *testing.T) {
 		}
 
 		mu.Lock()
-		messages = append(messages, sentMessage{TargetID: body.Target.ID, Text: body.Text})
+		messages = append(messages, sentMessage{TargetID: body.UserID, Text: body.Message})
 		mu.Unlock()
 
 		w.WriteHeader(http.StatusAccepted)

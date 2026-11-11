@@ -210,6 +210,7 @@ Each alert is sent as a private QQ message to every id in
 }
 ```
 
+The monitor calls the account-scoped `send_private_msg_async` OneBot action.
 The gateway's `202 Accepted` response means the message was queued, not
 delivered. The monitor retries network errors, `429`, and `5xx` responses with
 bounded backoff. `400`, `401`, `403`, and `413` are treated as configuration

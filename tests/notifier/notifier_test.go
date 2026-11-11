@@ -23,12 +23,8 @@ type capturedRequest struct {
 }
 
 type sendBody struct {
-	Platform string `json:"platform"`
-	Target   struct {
-		Kind string `json:"kind"`
-		ID   string `json:"id"`
-	} `json:"target"`
-	Text string `json:"text"`
+	UserID  string `json:"user_id"`
+	Message string `json:"message"`
 }
 
 type fakeGateway struct {
@@ -100,7 +96,7 @@ func TestSendDeliversToEveryMaintainer(t *testing.T) {
 		if request.Method != http.MethodPost {
 			t.Errorf("Method = %q", request.Method)
 		}
-		if request.Path != "/api/v1/messages" {
+		if request.Path != "/api/v1/accounts/qq/send_private_msg_async" {
 			t.Errorf("Path = %q", request.Path)
 		}
 		if request.Authorization != "Bearer test-token" {
@@ -109,17 +105,11 @@ func TestSendDeliversToEveryMaintainer(t *testing.T) {
 		if !strings.HasPrefix(request.ContentType, "application/json") {
 			t.Errorf("Content-Type = %q", request.ContentType)
 		}
-		if request.Body.Platform != "qq" {
-			t.Errorf("Platform = %q", request.Body.Platform)
+		if request.Body.UserID != []string{"10001", "10002"}[i] {
+			t.Errorf("UserID = %q", request.Body.UserID)
 		}
-		if request.Body.Target.Kind != "user" {
-			t.Errorf("Target.Kind = %q", request.Body.Target.Kind)
-		}
-		if request.Body.Target.ID != []string{"10001", "10002"}[i] {
-			t.Errorf("Target.ID = %q", request.Body.Target.ID)
-		}
-		if request.Body.Text != "hello" {
-			t.Errorf("Text = %q", request.Body.Text)
+		if request.Body.Message != "hello" {
+			t.Errorf("Message = %q", request.Body.Message)
 		}
 	}
 }
@@ -140,7 +130,7 @@ func TestSendTrimsTrailingSlashFromBaseURL(t *testing.T) {
 		t.Fatalf("Send() error = %v", err)
 	}
 	requests := gateway.captured()
-	if len(requests) != 1 || requests[0].Path != "/api/v1/messages" {
+	if len(requests) != 1 || requests[0].Path != "/api/v1/accounts/qq/send_private_msg_async" {
 		t.Fatalf("requests = %+v", requests)
 	}
 }
@@ -226,7 +216,7 @@ func TestSendRetriesServerErrors(t *testing.T) {
 
 func TestSendContinuesAfterPartialFailure(t *testing.T) {
 	gateway := &fakeGateway{handle: func(w http.ResponseWriter, body sendBody) {
-		if body.Target.ID == "10001" {
+		if body.UserID == "10001" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
