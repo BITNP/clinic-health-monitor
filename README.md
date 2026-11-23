@@ -71,7 +71,7 @@ Target: http://backend:8080/healthz
 First failure: 2026-11-06 14:05:00 +08:00
 Consecutive failures: 3
 Last error: HTTP 503 Service Unavailable
-Body: {"status":"unavailable","redis":"down"}
+Body: {"status":"unavailable"}
 ```
 
 Example recovery message:

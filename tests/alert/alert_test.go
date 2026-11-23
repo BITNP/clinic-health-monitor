@@ -21,7 +21,7 @@ func TestFormatDown(t *testing.T) {
 		Failures:     3,
 		Result: internal.Result{
 			StatusCode: 503,
-			Body:       `{"status":"unavailable","redis":"down"}`,
+			Body:       `{"status":"unavailable"}`,
 		},
 		Location: testLocation,
 	})
@@ -32,7 +32,7 @@ func TestFormatDown(t *testing.T) {
 		"First failure: 2026-11-06 14:05:00 +08:00",
 		"Consecutive failures: 3",
 		"Last error: HTTP 503 Service Unavailable",
-		`Body: {"status":"unavailable","redis":"down"}`,
+		`Body: {"status":"unavailable"}`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("FormatDown() = %q, missing %q", text, want)

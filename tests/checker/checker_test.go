@@ -18,7 +18,7 @@ func TestCheckHealthy(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userAgent = r.Header.Get("User-Agent")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(` {"status":"ok","redis":"up"} `))
+		_, _ = w.Write([]byte(` {"status":"ok"} `))
 	}))
 	defer server.Close()
 
@@ -29,7 +29,7 @@ func TestCheckHealthy(t *testing.T) {
 	if result.StatusCode != http.StatusOK {
 		t.Errorf("StatusCode = %d", result.StatusCode)
 	}
-	if result.Body != `{"status":"ok","redis":"up"}` {
+	if result.Body != `{"status":"ok"}` {
 		t.Errorf("Body = %q", result.Body)
 	}
 	if result.CheckedAt.IsZero() {
@@ -61,7 +61,7 @@ func TestCheckNon2xxIsUnhealthy(t *testing.T) {
 		status int
 		body   string
 	}{
-		{name: "service unavailable", status: http.StatusServiceUnavailable, body: `{"status":"unavailable","redis":"down"}`},
+		{name: "service unavailable", status: http.StatusServiceUnavailable, body: `{"status":"unavailable"}`},
 		{name: "internal error", status: http.StatusInternalServerError, body: "boom"},
 		{name: "not found", status: http.StatusNotFound, body: "missing"},
 	}

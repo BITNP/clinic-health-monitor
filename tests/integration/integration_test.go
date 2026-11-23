@@ -32,11 +32,11 @@ func TestAlertAndRecoveryReachEveryMaintainer(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if healthy.Load() {
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{"status":"ok","redis":"up"}`))
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
 			return
 		}
 		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte(`{"status":"unavailable","redis":"down"}`))
+		_, _ = w.Write([]byte(`{"status":"unavailable"}`))
 	}))
 	defer backend.Close()
 
